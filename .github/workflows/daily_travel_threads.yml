@@ -1,0 +1,41 @@
+name: Daily Travel Threads Generator
+on:
+  schedule:
+    # 매일 아침 한국시간 오전 8시 15분 (UTC 23:15)에 자동 실행
+    - cron: '15 23 * * *'
+  workflow_dispatch: # 깃허브에서 수동으로 '실행' 버튼 눌러 테스트도 가능
+
+permissions:
+  contents: write
+
+jobs:
+  run-travel-bot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 코드 가져오기
+        uses: actions/checkout@v4
+
+      - name: 파이썬 설치
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 라이브러리 설치
+        run: pip install -U pip && pip install -r requirements.txt
+
+      - name: 여행 쓰레드 콘텐츠 생성 및 텔레그램 전송
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python travel_bot.py
+
+      - name: 다룬 주제 이력 자동 커밋 & 푸시 (중복 방지)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add history_topics.txt
+          if ! git diff --staged --quiet; then
+            git commit -m "chore: update travel topics history [skip ci]"
+            git push
+          fi
