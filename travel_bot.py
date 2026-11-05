@@ -13,7 +13,7 @@ GEMINI_API_KEY = (os.getenv("GEMINI_API_KEY") or "").strip()
 
 HISTORY_FILE = "history_topics.txt"
 
-# 감성 넘치는 고화질 랜드마크 사진 큐레이션 (1080px 최적화)
+# 감성 넘치는 고화질 랜드마크/여행 사진 큐레이션 (1080px)
 CURATED_PHOTOS = {
     "paris": "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=1080&q=80",
     "swiss": "https://images.unsplash.com/photo-1530122037265-a5f1f91d3b99?w=1080&q=80",
@@ -22,22 +22,35 @@ CURATED_PHOTOS = {
     "spain": "https://images.unsplash.com/photo-1583422409516-2895a77efded?w=1080&q=80",
     "tokyo": "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?w=1080&q=80",
     "kyoto": "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=1080&q=80",
+    "osaka": "https://images.unsplash.com/photo-1590559899731-a382839e5549?w=1080&q=80",
     "sapporo": "https://images.unsplash.com/photo-1542051841857-5f90071e7989?w=1080&q=80",
     "bali": "https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=1080&q=80",
     "bangkok": "https://images.unsplash.com/photo-1508009603885-50cf7c579365?w=1080&q=80",
     "danang": "https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=1080&q=80",
     "jeju": "https://images.unsplash.com/photo-1548115184-bc6544d06a58?w=1080&q=80",
     "flight": "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=1080&q=80",
+    "airport": "https://images.unsplash.com/photo-1530521954074-e64f6810b32d?w=1080&q=80",
     "europe": "https://images.unsplash.com/photo-1467269204594-9661b134dd2b?w=1080&q=80",
 }
 
-# 요즘 쓰레드에서 저장/공유 폭발하는 핵심 카테고리 풀
-VIRAL_TRAVEL_CATEGORIES = [
-    {"region": "유럽 (파리/런던/스위스/이탈리아/스페인)", "type": "현지인만 아는 실전 압축 꿀팁 3줄 요약", "tag": "europe"},
-    {"region": "일본 (도쿄/오사카/교토/후쿠오카/삿포로)", "type": "처음 가면 100% 멘붕 오는 동선/교통/환전 3줄 요약", "tag": "japan"},
-    {"region": "동남아 (발리/다낭/방콕/푸꾸옥)", "type": "가성비 럭셔리 휴양지 실패 없는 꿀팁 3줄 요약", "tag": "southeast_asia"},
-    {"region": "공항/항공권/짐싸기", "type": "여행 고수들만 써먹는 비행기/공항 꿀팁 3줄 요약", "tag": "flight"},
-    {"region": "국내 감성 여행 (제주/강릉/경주/남해)", "type": "한국인도 잘 모르는 인생샷 명소 3줄 요약", "tag": "korea"},
+# 쓰레드에서 댓글 수백 개 터지는 4대 논쟁 테마
+DEBATE_THEMES = [
+    {
+        "type": "호불호 극단 논쟁",
+        "desc": "낭만 원탑 vs 환상 와장창 깨짐 (파리 소매치기/악취 vs 낭만, 발리 생각보다 덥고 트래픽 vs 천국, 런던 음식 최악 vs 인생도시 등)",
+    },
+    {
+        "type": "경험자 소환형 참견 유도",
+        "desc": "가본 사람들만 아는 '남들 다 사는데 솔직히 돈 아까운 것' (돈키호테 거품템, 다낭 쇼핑리스트 함정, 유럽 갈 때 괜히 챙겨서 짐만 된 것 등)",
+    },
+    {
+        "type": "돈값 한다 vs 돈 낭비다 (가격/가성비 논쟁)",
+        "desc": "스위스 융프라우 왕복 25만원 티켓 무조건 필수다 vs 그냥 인터라켄 호수 산책이 낫다, 비즈니스석 살 돈으로 5성급 호텔 업그레이드 vs 비행기 피로 줄이기 등",
+    },
+    {
+        "type": "여행 갈 때 사람 미치게 만드는 밸런스 게임",
+        "desc": "분 단위 엑셀 계획 J친구 vs 비행기 타기 직전까지 몸만 오는 무계획 P친구, 비행기 이코노미석 등받이 젖히기 내 권리다 vs 뒷사람 민폐다 등",
+    },
 ]
 
 
@@ -77,9 +90,11 @@ def match_photo_url(keyword: str) -> str:
         return CURATED_PHOTOS["london"]
     if any(k in kw for k in ["spain", "barcelona", "스페인", "바르셀로나"]):
         return CURATED_PHOTOS["spain"]
+    if any(k in kw for k in ["osaka", "오사카", "도톤보리"]):
+        return CURATED_PHOTOS["osaka"]
     if any(k in kw for k in ["tokyo", "도쿄", "시부야", "신주쿠"]):
         return CURATED_PHOTOS["tokyo"]
-    if any(k in kw for k in ["kyoto", "osaka", "교토", "오사카", "후쿠오카", "일본"]):
+    if any(k in kw for k in ["kyoto", "교토", "후쿠오카", "일본", "돈키호테"]):
         return CURATED_PHOTOS["kyoto"]
     if any(k in kw for k in ["sapporo", "hokkaido", "삿포로", "홋카이도", "눈꽃"]):
         return CURATED_PHOTOS["sapporo"]
@@ -91,7 +106,7 @@ def match_photo_url(keyword: str) -> str:
         return CURATED_PHOTOS["danang"]
     if any(k in kw for k in ["jeju", "korea", "제주", "강릉", "국내", "남해"]):
         return CURATED_PHOTOS["jeju"]
-    if any(k in kw for k in ["flight", "airport", "비행기", "공항", "항공", "짐싸기"]):
+    if any(k in kw for k in ["flight", "airport", "비행기", "공항", "항공", "등받이", "여권"]):
         return CURATED_PHOTOS["flight"]
 
     return CURATED_PHOTOS["europe"]
@@ -114,48 +129,40 @@ def generate_with_gemini(client: genai.Client, prompt: str) -> str:
     raise RuntimeError(f"Gemini API 호출에 모두 실패했습니다: {last_error}")
 
 
-def create_viral_travel_content() -> dict:
+def create_debate_travel_content() -> dict:
     """
-    쓰레드에서 저장/좋아요가 폭발하는 '3줄 요약' 압축형 정보성 콘텐츠를 생성합니다.
-    (블로그 홍보/링크 멘트 일체 배제, 순수 100% 바이럴 꿀팁)
+    쓰레드에서 댓글/토론이 폭발하는 논쟁/밸런스형 여행 피드 글을 생성합니다.
+    (직접 안 가봤어도 자연스럽게 질문을 던져 댓글을 유도하는 포맷)
     """
     client = genai.Client(api_key=GEMINI_API_KEY)
     history = load_history()
 
-    category = random.choice(VIRAL_TRAVEL_CATEGORIES)
+    theme = random.choice(DEBATE_THEMES)
     recent_summary = "\n".join([f"- {h}" for h in history[-8:]])
 
     prompt = f"""
-당신은 인스타그램 쓰레드(Threads)에서 2030 여행 꿀팁으로 수만 저장/좋아요를 받는 인기 여행 인플루언서입니다.
-오늘 다룰 메인 테마: [{category['region']} - {category['type']}]
+당신은 인스타그램 쓰레드(Threads)에서 댓글 수백 개를 폭발시키는 감각적인 여행 크리에이터입니다.
+오늘 다룰 논쟁 테마: [{theme['type']} - {theme['desc']}]
 
 [최근 다룬 주제들 - 중복 피할 것]
 {recent_summary}
 
-요즘 쓰레드에서 가장 반응이 뜨거운 트렌드는 **"사족 없는 3줄 요약 + 실전 알짜 꿀팁"**입니다.
-피드를 내리던 사용자가 무조건 [저장]을 누르고 친구를 태그할 수밖에 없도록,
-가독성이 압도적이고 군더더기 없는 완결형 정보 글을 작성하세요.
-
-[절대 금지 규칙 - 엄격 준수]
-- ❌ "블로그 방문하세요", "프로필 링크 확인", "블로그에 정리해 둠" 등 블로그/홍보 관련 단어 일체 언급 금지! (순수한 100% 정보 글이어야 사람들이 '저장'을 누르고 프로필을 알아서 찾아봅니다.)
-- ❌ 길고 지루한 일기나 감성 미사여구 금지.
-
-[필수 작성 규칙]
-1. 첫 문장 후킹: 직관적이고 시선을 끄는 제목형 첫 줄
-   - 예시: "유럽 여행 갈 때 모르면 100만원 손해보는 꿀팁 3줄 요약 🇪🇺"
-   - 예시: "파리 지하철 소매치기 100% 피하는 법 3줄 요약 🇫🇷"
-   - 예시: "스위스 융프라우 갈 때 한국인 90%가 놓치는 꿀팁 3줄 요약 🇨🇭"
-2. 📌 3줄 요약:
-   1. (구체적 지명/방법과 실전 꿀팁 1)
-   2. (구체적 지명/방법과 실전 꿀팁 2)
-   3. (구체적 지명/방법과 실전 꿀팁 3)
-3. 💡 한 줄 꿀팁: 현지에서 진짜 유용한 팁 1개 추가
-4. 저장 유도: "📌 이번 여행 가실 때 꼭 써먹게 미리 [저장]해 두세요!"
-5. 인기 해시태그 3~4개
+[쓰레드 댓글 폭발 핵심 공식]
+1. 화자의 입장: "내가 전문가인 척" 가르치는 게 아니라, **"주변에서/인터넷에서 의견이 극단으로 갈려서 너무 궁금한 사람"** 또는 **"질문을 던지며 판을 깔아주는 사람"** 포지션입니다. (직접 안 가봤어도 100% 자연스러움)
+2. 첫 문장 후킹: 보자마자 손가락을 멈추게 만드는 도발적이거나 공감되는 한 줄 질문
+   - 예: "솔직히 파리 여행… 낭만 원탑이다 vs 소매치기에 냄새나서 환상 다 깨진다?"
+   - 예: "일본 n번째 다녀오신 분들께 진지하게 묻습니다. 돈키호테에서 솔직히 이건 거품이다 하는 거 1위가 뭔가요?"
+   - 예: "스위스 융프라우 왕복 25만원 기차표… 무조건 돈값 한다 vs 그냥 인터라켄 호수가 낫다?"
+   - 예: "비행기 이코노미석 등받이 끝까지 젖히는 거… 내 권리다 vs 뒤 사람 민폐다?"
+3. 본문 구성:
+   - 양측의 입장을 아주 그럴듯하게 2가지로 요약 (사람들이 읽고 '어? 내 얘기네' 하게 만들기)
+   - 마지막 줄: 다녀온 사람들의 참견 본능을 자극하는 강력한 질문 ("가보신 분들 솔직히 어떠셨어요?", "여러분의 선택은?")
+4. 글자 수: 쓰레드 1개 화면에 딱 들어오는 250~350자 내외 (절대 길게 쓰지 말 것)
+5. ❌ 금지 규칙: 블로그 방문, 링크, 광고성 멘트 일체 금지!
 
 [출력 형식 - 아래 구분자를 정확히 지켜주세요]
-TOPIC_TITLE: [오늘의 핵심 주제 (예: 스위스 융프라우 알짜 꿀팁 3줄 요약)]
-PHOTO_SEARCH: [위 내용과 직결된 영문 도시/명소 키워드 (예: Swiss Alps, Paris, Rome, Kyoto, London, Bali)]
+TOPIC_TITLE: [오늘의 핵심 논쟁 주제 한 줄]
+PHOTO_KEYWORD: [이 논쟁과 직결된 영문 도시/랜드마크 키워드 (예: Paris, Swiss Alps, Rome, Osaka, Tokyo, Flight)]
 ---THREADS_POST_START---
 [여기에 쓰레드에 바로 복사해서 올릴 본문 텍스트 전체를 작성하세요]
 ---THREADS_POST_END---
@@ -163,17 +170,17 @@ PHOTO_SEARCH: [위 내용과 직결된 영문 도시/명소 키워드 (예: Swis
 
     res_text = generate_with_gemini(client, prompt)
 
-    topic_title = "오늘의 여행 꿀팁 3줄 요약"
-    photo_search = "Europe"
+    topic_title = "오늘의 여행 밸런스 토론"
+    photo_keyword = "Paris"
     threads_post = ""
 
     t_match = re.search(r"TOPIC_TITLE:\s*(.+)", res_text)
     if t_match:
         topic_title = t_match.group(1).strip()
 
-    p_match = re.search(r"PHOTO_SEARCH:\s*(.+)", res_text)
+    p_match = re.search(r"PHOTO_KEYWORD:\s*(.+)", res_text)
     if p_match:
-        photo_search = p_match.group(1).strip().strip("[]").strip('"')
+        photo_keyword = p_match.group(1).strip().strip("[]").strip('"')
 
     c_match = re.search(
         r"---THREADS_POST_START---([\s\S]*?)---THREADS_POST_END---", res_text
@@ -182,14 +189,14 @@ PHOTO_SEARCH: [위 내용과 직결된 영문 도시/명소 키워드 (예: Swis
         threads_post = c_match.group(1).strip()
     else:
         threads_post = re.sub(
-            r"^(TOPIC_TITLE|PHOTO_SEARCH):.*$", "", res_text, flags=re.MULTILINE
+            r"^(TOPIC_TITLE|PHOTO_KEYWORD):.*$", "", res_text, flags=re.MULTILINE
         ).strip()
 
-    photo_url = match_photo_url(f"{photo_search} {topic_title}")
+    photo_url = match_photo_url(f"{photo_keyword} {topic_title}")
 
     return {
         "topic": topic_title,
-        "photo_search": photo_search,
+        "photo_keyword": photo_keyword,
         "photo_url": photo_url,
         "threads_post": threads_post,
     }
@@ -200,10 +207,10 @@ def send_to_telegram(data: dict) -> None:
     # 1. 고화질 사진 전송 (sendPhoto)
     photo_api = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendPhoto"
     caption_intro = (
-        f"📸 [오늘의 쓰레드 추천 랜드마크 사진]\n"
-        f"🏷️ 주제: {data['topic']}\n\n"
-        f"💡 위 사진 꾹 눌러 갤러리에 저장하고,\n"
-        f"아래 글을 꾹 눌러 복사 ➔ 쓰레드에 바로 올리세요! (3초 컷)"
+        f"📸 [오늘의 쓰레드 논쟁/토론 픽]\n"
+        f"🔥 주제: {data['topic']}\n\n"
+        f"💡 사진 꾹 눌러 저장 ➔ 아래 글 복사 ➔ 쓰레드에 붙여넣기!\n"
+        f"(댓글 유도 효과 극대화 포맷입니다)"
     )
 
     photo_payload = {
@@ -248,10 +255,10 @@ def validate_env() -> None:
 
 def main():
     validate_env()
-    print("1. 쓰레드 대세 트렌드 '3줄 요약' 순수 정보형 콘텐츠 생성 중...")
-    data = create_viral_travel_content()
+    print("1. 쓰레드 댓글 폭발용 논쟁/밸런스형 여행 피드 생성 중...")
+    data = create_debate_travel_content()
     print(f"   -> 주제: {data['topic']}")
-    print(f"   -> 사진 매칭: {data['photo_search']}")
+    print(f"   -> 키워드: {data['photo_keyword']}")
     print(f"   -> 사진 URL: {data['photo_url']}")
 
     print("2. 텔레그램으로 고화질 사진 및 복사용 텍스트 전송 중...")
