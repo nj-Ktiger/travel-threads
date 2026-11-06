@@ -33,23 +33,27 @@ CURATED_PHOTOS = {
     "europe": "https://images.unsplash.com/photo-1467269204594-9661b134dd2b?w=1080&q=80",
 }
 
-# 쓰레드에서 댓글 수백 개 터지는 4대 논쟁 테마
-DEBATE_THEMES = [
+# 쓰레드에서 3초 만에 읽히고 댓글 터지는 5대 테마
+ENGAGEMENT_THEMES = [
     {
-        "type": "호불호 극단 논쟁",
-        "desc": "낭만 원탑 vs 환상 와장창 깨짐 (파리 소매치기/악취 vs 낭만, 발리 생각보다 덥고 트래픽 vs 천국, 런던 음식 최악 vs 인생도시 등)",
+        "type": "1 vs 2 호불호 극단 논쟁",
+        "desc": "낭만 원탑 vs 환상 와장창 (파리 에펠탑 낭만 vs 소매치기/지린내, 발리 천국 vs 더위/트래픽, 런던 인생도시 vs 최악의 물가 등)",
     },
     {
-        "type": "경험자 소환형 참견 유도",
-        "desc": "가본 사람들만 아는 '남들 다 사는데 솔직히 돈 아까운 것' (돈키호테 거품템, 다낭 쇼핑리스트 함정, 유럽 갈 때 괜히 챙겨서 짐만 된 것 등)",
+        "type": "가성비 & 돈값 논쟁",
+        "desc": "스위스 융프라우 왕복 25만원 티켓 돈값 한다 vs 그냥 인터라켄 호수가 낫다, 비즈니스석 살 돈으로 5성급 호텔 vs 비행기 피로 줄이기 등",
     },
     {
-        "type": "돈값 한다 vs 돈 낭비다 (가격/가성비 논쟁)",
-        "desc": "스위스 융프라우 왕복 25만원 티켓 무조건 필수다 vs 그냥 인터라켄 호수 산책이 낫다, 비즈니스석 살 돈으로 5성급 호텔 업그레이드 vs 비행기 피로 줄이기 등",
+        "type": "여행 매너 & 밸런스 게임",
+        "desc": "비행기 이코노미석 등받이 젖히기 내 권리다 vs 뒷사람 민폐다, 1분 단위 엑셀 계획 J vs 무계획 몸만 오는 P 등",
     },
     {
-        "type": "여행 갈 때 사람 미치게 만드는 밸런스 게임",
-        "desc": "분 단위 엑셀 계획 J친구 vs 비행기 타기 직전까지 몸만 오는 무계획 P친구, 비행기 이코노미석 등받이 젖히기 내 권리다 vs 뒷사람 민폐다 등",
+        "type": "사이다 3줄 팩폭/꿀팁 요약",
+        "desc": "유럽 배낭여행 챙겨서 제일 후회한 짐 3가지, 다낭/동남아 여행 솔직히 거품인 쇼핑템 3가지, 일본 여행 편의점에서 현지인만 집는 3가지 등",
+    },
+    {
+        "type": "경험자 1위 참견 유도",
+        "desc": "돈키호테에서 사고 집 와서 제일 후회한 거 1위, 동남아 야시장 갔을 때 제일 어이없었던 순간 등",
     },
 ]
 
@@ -94,7 +98,7 @@ def match_photo_url(keyword: str) -> str:
         return CURATED_PHOTOS["osaka"]
     if any(k in kw for k in ["tokyo", "도쿄", "시부야", "신주쿠"]):
         return CURATED_PHOTOS["tokyo"]
-    if any(k in kw for k in ["kyoto", "교토", "후쿠오카", "일본", "돈키호테"]):
+    if any(k in kw for k in ["kyoto", "교토", "후쿠오카", "일본", "돈키호테", "편의점"]):
         return CURATED_PHOTOS["kyoto"]
     if any(k in kw for k in ["sapporo", "hokkaido", "삿포로", "홋카이도", "눈꽃"]):
         return CURATED_PHOTOS["sapporo"]
@@ -106,7 +110,7 @@ def match_photo_url(keyword: str) -> str:
         return CURATED_PHOTOS["danang"]
     if any(k in kw for k in ["jeju", "korea", "제주", "강릉", "국내", "남해"]):
         return CURATED_PHOTOS["jeju"]
-    if any(k in kw for k in ["flight", "airport", "비행기", "공항", "항공", "등받이", "여권"]):
+    if any(k in kw for k in ["flight", "airport", "비행기", "공항", "항공", "등받이", "여권", "좌석", "캐리어", "배낭", "backpacking", "luggage"]):
         return CURATED_PHOTOS["flight"]
 
     return CURATED_PHOTOS["europe"]
@@ -131,38 +135,69 @@ def generate_with_gemini(client: genai.Client, prompt: str) -> str:
 
 def create_debate_travel_content() -> dict:
     """
-    쓰레드에서 댓글/토론이 폭발하는 논쟁/밸런스형 여행 피드 글을 생성합니다.
-    (직접 안 가봤어도 자연스럽게 질문을 던져 댓글을 유도하는 포맷)
+    쓰레드에서 3초 만에 읽히고 댓글/저장이 폭발하는 초간결 피드 글을 생성합니다.
+    (주저리주저리 긴 설명 일체 배제, 100~160자 내외, 시원한 줄바꿈)
     """
     client = genai.Client(api_key=GEMINI_API_KEY)
     history = load_history()
 
-    theme = random.choice(DEBATE_THEMES)
+    theme = random.choice(ENGAGEMENT_THEMES)
     recent_summary = "\n".join([f"- {h}" for h in history[-8:]])
 
     prompt = f"""
-당신은 인스타그램 쓰레드(Threads)에서 댓글 수백 개를 폭발시키는 감각적인 여행 크리에이터입니다.
-오늘 다룰 논쟁 테마: [{theme['type']} - {theme['desc']}]
+당신은 인스타그램 쓰레드(Threads)에서 댓글 수백 개를 터뜨리는 트렌디한 여행 크리에이터입니다.
+절대 블로그처럼 주저리주저리 설명하거나 긴 문장을 쓰지 마세요.
+읽는 데 3~5초도 안 걸리게, 줄바꿈을 시원하게 넣고 툭툭 던지는 짧고 강렬한 호흡이어야 합니다.
+
+오늘 다룰 테마: [{theme['type']} - {theme['desc']}]
 
 [최근 다룬 주제들 - 중복 피할 것]
 {recent_summary}
 
-[쓰레드 댓글 폭발 핵심 공식]
-1. 화자의 입장: "내가 전문가인 척" 가르치는 게 아니라, **"주변에서/인터넷에서 의견이 극단으로 갈려서 너무 궁금한 사람"** 또는 **"질문을 던지며 판을 깔아주는 사람"** 포지션입니다. (직접 안 가봤어도 100% 자연스러움)
-2. 첫 문장 후킹: 보자마자 손가락을 멈추게 만드는 도발적이거나 공감되는 한 줄 질문
-   - 예: "솔직히 파리 여행… 낭만 원탑이다 vs 소매치기에 냄새나서 환상 다 깨진다?"
-   - 예: "일본 n번째 다녀오신 분들께 진지하게 묻습니다. 돈키호테에서 솔직히 이건 거품이다 하는 거 1위가 뭔가요?"
-   - 예: "스위스 융프라우 왕복 25만원 기차표… 무조건 돈값 한다 vs 그냥 인터라켄 호수가 낫다?"
-   - 예: "비행기 이코노미석 등받이 끝까지 젖히는 거… 내 권리다 vs 뒤 사람 민폐다?"
-3. 본문 구성:
-   - 양측의 입장을 아주 그럴듯하게 2가지로 요약 (사람들이 읽고 '어? 내 얘기네' 하게 만들기)
-   - 마지막 줄: 다녀온 사람들의 참견 본능을 자극하는 강력한 질문 ("가보신 분들 솔직히 어떠셨어요?", "여러분의 선택은?")
-4. 글자 수: 쓰레드 1개 화면에 딱 들어오는 250~350자 내외 (절대 길게 쓰지 말 것)
-5. ❌ 금지 규칙: 블로그 방문, 링크, 광고성 멘트 일체 금지!
+[쓰레드 핵심 작성 규칙]
+1. 분량: 공백 포함 100~160자 내외 (절대 길어지면 안 됨! 총 4~6줄 내외)
+2. 사족 제거: 서론, 배경 설명, 훈계, 혼잣말 절대 금지.
+3. 네이버 블로그 말투(잇님들, 서이추, ~했답니다, 포스팅 등) 일체 금지!
+4. 문체: 담백하고 트렌디한 인스타/쓰레드 구어체 (~함?, ~인가요?, 솔직히, 님들, 1위는?, 인정?)
+5. 아래 2가지 포맷 중 테마에 가장 잘 어울리는 1가지를 택해 작성하세요:
+
+[포맷 1: 1 vs 2 극단 밸런스 토론]
+1~2줄: 한눈에 꽂히는 질문
+1. 의견 A (1줄)
+vs
+2. 의견 B (1줄)
+댓글 유도 질문 1줄
+
+(예시 1)
+솔직히 파리 여행…
+낭만 원탑이다 vs 환상 와장창이다?
+
+1. 에펠탑 하나로 인생 여행지 등극
+vs
+2. 소매치기에 지린내 때문에 다신 안 감
+
+다녀오신 분들 솔직히 어떠셨나요?
+
+[포맷 2: 사이다 3줄 팩폭 / 꿀팁 요약]
+1~2줄: 뼈 때리는 질문이나 호기심 자극
+1. 첫 번째 요약 (1줄)
+2. 두 번째 요약 (1줄)
+3. 세 번째 요약 (1줄)
+공감/댓글 유도 1줄
+
+(예시 2)
+유럽 배낭여행 갈 때
+제발 이것만은 버리고 가라 3가지
+
+1. 드라이기 (전압 안 맞으면 바로 고장남)
+2. 수건 5장 (그냥 호텔/호스텔 거 쓰세요)
+3. 챙겨온 책 (짐만 되고 1페이지도 안 읽음)
+
+님들은 가져갔다가 제일 후회한 짐 뭐임?
 
 [출력 형식 - 아래 구분자를 정확히 지켜주세요]
-TOPIC_TITLE: [오늘의 핵심 논쟁 주제 한 줄]
-PHOTO_KEYWORD: [이 논쟁과 직결된 영문 도시/랜드마크 키워드 (예: Paris, Swiss Alps, Rome, Osaka, Tokyo, Flight)]
+TOPIC_TITLE: [오늘의 핵심 주제 한 줄]
+PHOTO_KEYWORD: [어울리는 영문 도시/키워드 (예: Paris, Swiss, Rome, Tokyo, Osaka, Danang, Flight, Backpacking 등)]
 ---THREADS_POST_START---
 [여기에 쓰레드에 바로 복사해서 올릴 본문 텍스트 전체를 작성하세요]
 ---THREADS_POST_END---
@@ -207,10 +242,8 @@ def send_to_telegram(data: dict) -> None:
     # 1. 고화질 사진 전송 (sendPhoto)
     photo_api = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendPhoto"
     caption_intro = (
-        f"📸 [오늘의 쓰레드 논쟁/토론 픽]\n"
-        f"🔥 주제: {data['topic']}\n\n"
-        f"💡 사진 꾹 눌러 저장 ➔ 아래 글 복사 ➔ 쓰레드에 붙여넣기!\n"
-        f"(댓글 유도 효과 극대화 포맷입니다)"
+        f"📸 [오늘의 쓰레드 픽: {data['topic']}]\n\n"
+        f"💡 사진 꾹 눌러 저장 ➔ 아래 글 복사 ➔ 쓰레드에 붙여넣기!"
     )
 
     photo_payload = {
@@ -255,11 +288,12 @@ def validate_env() -> None:
 
 def main():
     validate_env()
-    print("1. 쓰레드 댓글 폭발용 논쟁/밸런스형 여행 피드 생성 중...")
+    print("1. 쓰레드 초간결 팩폭/논쟁 여행 피드 생성 중...")
     data = create_debate_travel_content()
     print(f"   -> 주제: {data['topic']}")
     print(f"   -> 키워드: {data['photo_keyword']}")
     print(f"   -> 사진 URL: {data['photo_url']}")
+    print(f"   -> 본문:\n{data['threads_post']}")
 
     print("2. 텔레그램으로 고화질 사진 및 복사용 텍스트 전송 중...")
     send_to_telegram(data)
